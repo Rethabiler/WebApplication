@@ -1,0 +1,38 @@
+﻿@model WebApplication.Models.Client
+
+@{
+    ViewData["Title"] = "Delete Client";
+}
+
+<h2>Delete Client</h2>
+<hr />
+
+@* 
+    NEVER delete on a GET request — a bot or mis-click could wipe data.
+    This page just SHOWS the record. The actual delete happens on POST below.
+*@
+<div class="alert alert-danger">
+    Are you sure you want to delete <strong>@Model.Name</strong>? This cannot be undone.
+</div>
+
+<dl class="row">
+    <dt class="col-sm-3">Name</dt>
+    <dd class="col-sm-9">@Model.Name</dd>
+
+    <dt class="col-sm-3">Contact</dt>
+    <dd class="col-sm-9">@Model.Contact</dd>
+
+    <dt class="col-sm-3">Region</dt>
+    <dd class="col-sm-9">@Model.Region</dd>
+</dl>
+
+@*
+    This form posts to /Clients/Delete/5.
+    The [ActionName("Delete")] attribute in the controller maps it
+    to DeleteConfirmed() — avoiding a naming conflict with the GET Delete().
+*@
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+    <a asp-action="Index" class="btn btn-secondary ms-2">Cancel</a>
+</form>

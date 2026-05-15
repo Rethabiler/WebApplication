@@ -1,0 +1,96 @@
+﻿@model WebApplication.Models.Contract
+
+@{
+    ViewData["Title"] = "Edit Contract";
+}
+
+<h2>Edit Contract</h2>
+<hr />
+
+<form asp-action="Edit" method="post" enctype="multipart/form-data">
+
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" style="display:@(ViewData.ModelState.IsValid ? "none" : "block")"></div>
+
+    <input type="hidden" asp-for="Id" />
+
+    <div class="mb-3">
+        <label asp-for="ClientId" class="form-label">Client</label>
+        <select asp-for="ClientId" class="form-select" required>
+            <option value="">-- Select Client --</option>
+            @foreach (var c in (IEnumerable<WebApplication.Models.Client>)ViewBag.Clients)
+            {
+                <option value="@c.Id">@c.Name (@c.Region)</option>
+            }
+        </select>
+        <span asp-validation-for="ClientId" class="text-danger"></span>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="StartDate" class="form-label">Start Date</label>
+            <input asp-for="StartDate" type="date" class="form-control" required />
+            <span asp-validation-for="StartDate" class="text-danger"></span>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="EndDate" class="form-label">End Date</label>
+            <input asp-for="EndDate" type="date" class="form-control" required />
+            <span asp-validation-for="EndDate" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="Status" class="form-label">Status</label>
+            <select asp-for="Status" class="form-select" required>
+                <option value="">-- Select Status --</option>
+                @foreach (var s in (string[])ViewBag.Statuses)
+                {
+                    <option value="@s">@s</option>
+                }
+            </select>
+            <span asp-validation-for="Status" class="text-danger"></span>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="ServiceLevel" class="form-label">Service Level</label>
+            <select asp-for="ServiceLevel" class="form-select" required>
+                <option value="">-- Select Level --</option>
+                @foreach (var l in (string[])ViewBag.ServiceLevels)
+                {
+                    <option value="@l">@l</option>
+                }
+            </select>
+            <span asp-validation-for="ServiceLevel" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Signed Agreement <span class="text-muted">(PDF only)</span></label>
+
+        @* Show existing file if one is already uploaded *@
+        @if (!string.IsNullOrEmpty(Model.AgreementFilePath))
+        {
+            var fn = Model.AgreementFilePath.Split('/').Last();
+            <div class="alert alert-success py-2 mb-2">
+                Current file: <strong>@fn</strong>
+                <a asp-action="Download" asp-route-fileName="@fn" class="ms-3 btn btn-sm btn-outline-primary">Download</a>
+            </div>
+            <small class="text-muted">Upload a new file below to replace it, or leave empty to keep the current one.</small>
+        }
+        else
+        {
+            <small class="text-muted">No file uploaded yet.</small>
+        }
+
+        <input type="file" name="file" class="form-control mt-2" accept=".pdf" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+    <a asp-action="Index" class="btn btn-secondary ms-2">Cancel</a>
+
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

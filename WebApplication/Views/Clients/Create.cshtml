@@ -1,0 +1,76 @@
+﻿@* 
+    @model here is a single Client (not a list).
+    The controller passed an empty new Client() to pre-wire the form bindings.
+*@
+@model WebApplication.Models.Client
+
+@{
+    ViewData["Title"] = "New Client";
+}
+
+<h2>New Client</h2>
+<hr />
+
+@*
+    asp-action="Create"  → form posts to /Clients/Create
+    method="post"        → HTTP POST (not GET)
+    The @Html.AntiForgeryToken() is handled automatically by the tag helper below.
+*@
+<form asp-action="Create" method="post">
+
+    @* Shows any model-level errors (e.g. "Name is required") at the top *@
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" style="display:@(ViewData.ModelState.IsValid ? "none" : "block")"></div>
+
+    <div class="mb-3">
+        @* asp-for does two things: sets the input name AND links to the label *@
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" placeholder="e.g. Acme Corporation" />
+        @* asp-validation-for shows the error message next to THIS field *@
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Contact" class="form-label"></label>
+        <input asp-for="Contact" class="form-control" placeholder="e.g. john@acme.com or 011-555-0100" />
+        <span asp-validation-for="Contact" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Details" class="form-label"></label>
+        <textarea asp-for="Details" class="form-control" rows="3" placeholder="Any notes about this client"></textarea>
+        <span asp-validation-for="Details" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Region" class="form-label"></label>
+        @* A dropdown is better than a free-text box for Region *@
+        <select asp-for="Region" class="form-select">
+            <option value="">-- Select a region --</option>
+            <option>Western Cape</option>
+            <option>Gauteng</option>
+            <option>KwaZulu-Natal</option>
+            <option>Eastern Cape</option>
+            <option>Limpopo</option>
+            <option>Mpumalanga</option>
+            <option>North West</option>
+            <option>Free State</option>
+            <option>Northern Cape</option>
+        </select>
+        <span asp-validation-for="Region" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save Client</button>
+    @* Goes back to /Clients without submitting *@
+    <a asp-action="Index" class="btn btn-secondary ms-2">Cancel</a>
+
+</form>
+
+@* 
+    This loads jQuery Validate — makes errors appear instantly without
+    a round-trip to the server. Always include this in forms.
+*@
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

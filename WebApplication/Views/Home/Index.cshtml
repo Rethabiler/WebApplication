@@ -1,0 +1,64 @@
+﻿@{
+    ViewData["Title"] = "Home - GLMS";
+}
+
+<div class="text-center mt-5">
+    <h1 class="display-4 fw-bold text-primary">Global Logistics Management System</h1>
+    <p class="lead text-muted">TechMove Logistics — Enterprise Web Platform</p>
+    <hr class="my-4" />
+    <p class="mb-5">
+        Welcome to the GLMS platform. Use the navigation above or the buttons below
+        to manage clients, contracts, and service requests.
+    </p>
+</div>
+
+<div class="row g-4 mb-5">
+
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <h3 class="card-title text-primary">Clients</h3>
+                <p class="card-text text-muted">
+                    Add and manage client profiles including contact details and regional information.
+                </p>
+                <a asp-controller="Clients" asp-action="Index" class="btn btn-primary">
+                    Manage Clients
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <h3 class="card-title text-success">Contracts</h3>
+                <p class="card-text text-muted">
+                    Create and track freight contracts with service levels, dates, and signed agreements.
+                </p>
+                <a asp-controller="Contracts" asp-action="Index" class="btn btn-success">
+                    Manage Contracts
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <h3 class="card-title text-warning">Service Requests</h3>
+                <p class="card-text text-muted">
+                    Log service requests linked to active contracts and track their progress.
+                </p>
+                <a asp-controller="ServiceRequests" asp-action="Index" class="btn btn-warning">
+                    Manage Requests
+                </a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="alert alert-info text-center">
+    <strong>About GLMS:</strong> This system was built to replace the legacy spreadsheet-based workflow
+    at TechMove Logistics, providing a centralised platform for managing international freight operations.
+</div>

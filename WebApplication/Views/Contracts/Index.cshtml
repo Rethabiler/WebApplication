@@ -1,0 +1,116 @@
+﻿@model IEnumerable<WebApplication.Models.Contract>
+
+@{
+    ViewData["Title"] = "Contracts";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Contracts</h2>
+    <a asp-action="Create" class="btn btn-primary">+ New Contract</a>
+</div>
+
+@* ── SEARCH / FILTER FORM ── *@
+@* method="get" keeps the filters in the URL so you can bookmark/share them *@
+<form method="get" class="card p-3 mb-4">
+    <div class="row g-3 align-items-end">
+
+        <div class="col-md-3">
+            <label class="form-label">Start Date (from)</label>
+            @* value="@ViewBag.StartDate" re-fills the field after filtering *@
+            <input type="date" name="startDate" value="@ViewBag.StartDate" class="form-control" />
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">End Date (to)</label>
+            <input type="date" name="endDate" value="@ViewBag.EndDate" class="form-control" />
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-select">
+                <option value="">All Statuses</option>
+                @foreach (var s in (string[])ViewBag.Statuses)
+                {
+                    @* selected keeps the dropdown on the chosen value after filtering *@
+                    if (ViewBag.Status == s)
+                    {
+                        <option value="@s" selected>@s</option>
+                    }
+                    else
+                    {
+                        <option value="@s">@s</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-secondary flex-fill">Filter</button>
+            @* Clear removes all filters by going back to plain /Contracts *@
+            <a asp-action="Index" class="btn btn-outline-secondary flex-fill">Clear</a>
+        </div>
+
+    </div>
+</form>
+
+@* ── CONTRACTS TABLE ── *@
+<table class="table table-hover table-bordered">
+    <thead class="table-dark">
+        <tr>
+            <th>Client</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Status</th>
+            <th>Service Level</th>
+            <th>Agreement</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var c in Model)
+        {
+            <tr>
+                <td>@c.Client?.Name</td>
+                <td>@c.StartDate.ToString("yyyy-MM-dd")</td>
+                <td>@c.EndDate.ToString("yyyy-MM-dd")</td>
+                <td>
+                    @* Badge colour changes based on status *@
+                    @{
+                        var badgeClass = c.Status switch
+                        {
+                                        "Active" => "bg-success",
+                                        "Expired" => "bg-danger",
+                                        "On Hold" => "bg-warning text-dark",
+                            _ => "bg-secondary"
+                        };
+                    }
+                    <span class="badge @badgeClass">@c.Status</span>
+                </td>
+                <td>@c.ServiceLevel</td>
+                <td>
+                    @if (!string.IsNullOrEmpty(c.AgreementFilePath))
+                    {
+                        var fn = c.AgreementFilePath.Split('/').Last();
+                        <a asp-action="Download" asp-route-fileName="@fn" class="btn btn-sm btn-outline-primary">
+                            Download
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="text-muted">No file</span>
+                    }
+                </td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@c.Id" class="btn btn-sm btn-info">Details</a>
+                    <a asp-action="Edit" asp-route-id="@c.Id" class="btn btn-sm btn-warning">Edit</a>
+                    <a asp-action="Delete" asp-route-id="@c.Id" class="btn btn-sm btn-danger">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (!Model.Any())
+{
+    <p class="text-center text-muted mt-4">No contracts found. Adjust the filters or create a new one.</p>
+}
