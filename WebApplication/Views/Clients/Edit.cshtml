@@ -11,11 +11,7 @@
 
     <div asp-validation-summary="ModelOnly" class="alert alert-danger" style="display:@(ViewData.ModelState.IsValid ? "none" : "block")"></div>
 
-    @*
-        IMPORTANT: the Id must be submitted with the form so the controller
-        knows which record to update. It's hidden because the user doesn't
-        need to see or change it.
-    *@
+   
     <input type="hidden" asp-for="Id" />
 
     <div class="mb-3">
