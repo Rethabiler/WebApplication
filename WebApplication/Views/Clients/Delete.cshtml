@@ -23,11 +23,7 @@
     <dd class="col-sm-9">@Model.Region</dd>
 </dl>
 
-@*
-    This form posts to /Clients/Delete/5.
-    The [ActionName("Delete")] attribute in the controller maps it
-    to DeleteConfirmed() — avoiding a naming conflict with the GET Delete().
-*@
+
 <form asp-action="Delete" method="post">
     <input type="hidden" asp-for="Id" />
     <button type="submit" class="btn btn-danger">Yes, Delete</button>
