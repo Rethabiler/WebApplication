@@ -15,7 +15,7 @@ namespace WebApplication.Services
         private readonly HttpClient _httpClient;
         private readonly ILogger<CurrencyService> _logger;
 
-        // Cache the rate for 1 hour so we don't hit the API on every page load
+        
         private decimal _cachedRate = 0;
         private DateTime _cacheExpiry = DateTime.MinValue;
 
