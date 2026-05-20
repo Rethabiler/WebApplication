@@ -19,13 +19,10 @@ namespace WebApplication.Controllers
             _currencyService = currencyService;
         }
 
-        // ──────────────────────────────────────────────────────────────
-        // INDEX — list all service requests
-        // URL: /ServiceRequests
-        // ──────────────────────────────────────────────────────────────
+        
         public async Task<IActionResult> Index()
         {
-            // Include Contract and its Client so we can display names
+            
             var requests = await _context.ServiceRequests
                 .Include(s => s.Contract)
                     .ThenInclude(c => c!.Client)
@@ -34,10 +31,7 @@ namespace WebApplication.Controllers
             return View(requests);
         }
 
-        // ──────────────────────────────────────────────────────────────
-        // DETAILS — show one service request
-        // URL: /ServiceRequests/Details/5
-        // ──────────────────────────────────────────────────────────────
+       
         public async Task<IActionResult> Details(int id)
         {
             var sr = await _context.ServiceRequests
@@ -81,8 +75,7 @@ namespace WebApplication.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ServiceRequest serviceRequest)
         {
-            // ── WORKFLOW ENFORCEMENT (server-side) ──
-            // Always re-check on POST — never trust the client alone
+         
             var contract = await _context.Contracts.FindAsync(serviceRequest.ContractId);
 
             if (contract == null)
