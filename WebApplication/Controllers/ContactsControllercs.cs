@@ -1,61 +1,46 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApplication.Data;
 using WebApplication.Models;
+using WebApplication.Services;
 
 namespace WebApplication.Controllers
 {
     public class ContractsController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IGlmsApiService _apiService;
         private readonly IWebHostEnvironment _environment;
 
-        public ContractsController(ApplicationDbContext context, IWebHostEnvironment environment)
+        public ContractsController(IGlmsApiService apiService, IWebHostEnvironment environment)
         {
-            _context = context;
+            _apiService = apiService;
             _environment = environment;
         }
 
         // GET: Contracts
         public async Task<IActionResult> Index(DateTime? startDate, DateTime? endDate, string? status)
         {
-            var query = _context.Contracts.Include(c => c.Client).AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(status))
-                query = query.Where(c => c.Status == status);
-
-            if (startDate.HasValue)
-                query = query.Where(c => c.StartDate >= startDate.Value);
-
-            if (endDate.HasValue)
-                query = query.Where(c => c.EndDate <= endDate.Value);
+            var contracts = await _apiService.GetContractsAsync(status, startDate, endDate);
 
             ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd");
             ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd");
             ViewBag.Status = status;
             ViewBag.Statuses = new[] { "Draft", "Active", "Expired", "On Hold" };
 
-            return View(await query.OrderByDescending(c => c.StartDate).ToListAsync());
+            return View(contracts);
         }
 
         // GET: Contracts/Details/5
         public async Task<IActionResult> Details(int id)
         {
-            var contract = await _context.Contracts
-                .Include(c => c.Client)
-                .Include(c => c.ServiceRequests)
-                .FirstOrDefaultAsync(c => c.Id == id);
-
-            if (contract == null)
-                return NotFound();
-
+            var contract = await _apiService.GetContractAsync(id);
+            if (contract == null) return NotFound();
             return View(contract);
         }
 
         // GET: Contracts/Create
         public async Task<IActionResult> Create()
         {
-            ViewBag.Clients = await _context.Clients.ToListAsync();
+            var clients = await _apiService.GetClientsAsync();
+            ViewBag.Clients = clients;
             ViewBag.Statuses = new[] { "Draft", "Active", "Expired", "On Hold" };
             ViewBag.ServiceLevels = new[] { "Basic", "Standard", "Premium" };
             return View();
@@ -71,7 +56,7 @@ namespace WebApplication.Controllers
                 if (Path.GetExtension(file.FileName).ToLower() != ".pdf")
                 {
                     ModelState.AddModelError("", "Only PDF files are allowed.");
-                    ViewBag.Clients = await _context.Clients.ToListAsync();
+                    ViewBag.Clients = await _apiService.GetClientsAsync();
                     ViewBag.Statuses = new[] { "Draft", "Active", "Expired", "On Hold" };
                     ViewBag.ServiceLevels = new[] { "Basic", "Standard", "Premium" };
                     return View(contract);
@@ -96,29 +81,34 @@ namespace WebApplication.Controllers
 
             if (!ModelState.IsValid)
             {
-                ViewBag.Clients = await _context.Clients.ToListAsync();
+                ViewBag.Clients = await _apiService.GetClientsAsync();
                 ViewBag.Statuses = new[] { "Draft", "Active", "Expired", "On Hold" };
                 ViewBag.ServiceLevels = new[] { "Basic", "Standard", "Premium" };
                 return View(contract);
             }
 
-            _context.Contracts.Add(contract);
-            await _context.SaveChangesAsync();
+            var success = await _apiService.CreateContractAsync(contract);
+            if (!success)
+            {
+                ModelState.AddModelError("", "Failed to create contract.");
+                ViewBag.Clients = await _apiService.GetClientsAsync();
+                ViewBag.Statuses = new[] { "Draft", "Active", "Expired", "On Hold" };
+                ViewBag.ServiceLevels = new[] { "Basic", "Standard", "Premium" };
+                return View(contract);
+            }
+
             return RedirectToAction(nameof(Index));
         }
 
         // GET: Contracts/Edit/5
         public async Task<IActionResult> Edit(int id)
         {
-            var contract = await _context.Contracts.FindAsync(id);
+            var contract = await _apiService.GetContractAsync(id);
+            if (contract == null) return NotFound();
 
-            if (contract == null)
-                return NotFound();
-
-            ViewBag.Clients = await _context.Clients.ToListAsync();
+            ViewBag.Clients = await _apiService.GetClientsAsync();
             ViewBag.Statuses = new[] { "Draft", "Active", "Expired", "On Hold" };
             ViewBag.ServiceLevels = new[] { "Basic", "Standard", "Premium" };
-
             return View(contract);
         }
 
@@ -127,20 +117,14 @@ namespace WebApplication.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, Contract contract, IFormFile? file)
         {
-            if (id != contract.Id)
-                return NotFound();
-
-            var existing = await _context.Contracts.FindAsync(id);
-
-            if (existing == null)
-                return NotFound();
+            if (id != contract.Id) return NotFound();
 
             if (file != null && file.Length > 0)
             {
                 if (Path.GetExtension(file.FileName).ToLower() != ".pdf")
                 {
                     ModelState.AddModelError("", "Only PDF files are allowed.");
-                    ViewBag.Clients = await _context.Clients.ToListAsync();
+                    ViewBag.Clients = await _apiService.GetClientsAsync();
                     ViewBag.Statuses = new[] { "Draft", "Active", "Expired", "On Hold" };
                     ViewBag.ServiceLevels = new[] { "Basic", "Standard", "Premium" };
                     return View(contract);
@@ -156,29 +140,18 @@ namespace WebApplication.Controllers
                 using (var stream = new FileStream(filePath, FileMode.Create))
                     await file.CopyToAsync(stream);
 
-                existing.AgreementFilePath = "Uploads/Contracts/" + fileName;
+                contract.AgreementFilePath = "Uploads/Contracts/" + fileName;
             }
 
-            existing.ClientId = contract.ClientId;
-            existing.StartDate = contract.StartDate;
-            existing.EndDate = contract.EndDate;
-            existing.Status = contract.Status;
-            existing.ServiceLevel = contract.ServiceLevel;
-
-            await _context.SaveChangesAsync();
+            await _apiService.UpdateContractStatusAsync(id, contract.Status);
             return RedirectToAction(nameof(Index));
         }
 
         // GET: Contracts/Delete/5
         public async Task<IActionResult> Delete(int id)
         {
-            var contract = await _context.Contracts
-                .Include(c => c.Client)
-                .FirstOrDefaultAsync(c => c.Id == id);
-
-            if (contract == null)
-                return NotFound();
-
+            var contract = await _apiService.GetContractAsync(id);
+            if (contract == null) return NotFound();
             return View(contract);
         }
 
@@ -187,18 +160,11 @@ namespace WebApplication.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var contract = await _context.Contracts.FindAsync(id);
-
-            if (contract != null)
-            {
-                _context.Contracts.Remove(contract);
-                await _context.SaveChangesAsync();
-            }
-
+            await _apiService.DeleteContractAsync(id);
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: Download agreement PDF
+        // Download PDF
         public IActionResult Download(string fileName)
         {
             string path = Path.Combine(_environment.WebRootPath, "Uploads", "Contracts", fileName);

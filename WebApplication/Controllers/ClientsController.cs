@@ -1,86 +1,118 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApplication.Data;
 using WebApplication.Models;
+using WebApplication.Services;
 
 namespace WebApplication.Controllers
 {
     public class ClientsController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        // No more _context — we now call the API instead of the DB directly
+        private readonly IGlmsApiService _apiService;
 
-        public ClientsController(ApplicationDbContext context)
+        public ClientsController(IGlmsApiService apiService)
         {
-            _context = context;
+            _apiService = apiService;
         }
 
-        public async Task<IActionResult> Index()
+        // GET: Clients
+        public async Task<IActionResult> Index(string? search)
         {
-            var clients = await _context.Clients.ToListAsync();
+            var clients = await _apiService.GetClientsAsync(search);
+            ViewBag.Search = search;
             return View(clients);
         }
 
+        // GET: Clients/Details/5
         public async Task<IActionResult> Details(int id)
         {
-            var client = await _context.Clients
-                .Include(c => c.Contracts)
-                .FirstOrDefaultAsync(c => c.Id == id);
+            var client = await _apiService.GetClientAsync(id);
             if (client == null) return NotFound();
             return View(client);
         }
 
+        // GET: Clients/Create
         public IActionResult Create()
         {
+            ViewBag.Regions = new[] { "Western Cape", "Gauteng", "KwaZulu-Natal", "Eastern Cape", "Limpopo", "Mpumalanga", "North West", "Free State", "Northern Cape" };
             return View();
         }
 
+        // POST: Clients/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Client client)
         {
             ModelState.Remove("Contracts");
-            if (!ModelState.IsValid) return View(client);
-            _context.Clients.Add(client);
-            await _context.SaveChangesAsync();
+
+            if (!ModelState.IsValid)
+            {
+                ViewBag.Regions = new[] { "Western Cape", "Gauteng", "KwaZulu-Natal", "Eastern Cape", "Limpopo", "Mpumalanga", "North West", "Free State", "Northern Cape" };
+                return View(client);
+            }
+
+            var success = await _apiService.CreateClientAsync(client);
+
+            if (!success)
+            {
+                ModelState.AddModelError("", "Failed to create client. Please try again.");
+                ViewBag.Regions = new[] { "Western Cape", "Gauteng", "KwaZulu-Natal", "Eastern Cape", "Limpopo", "Mpumalanga", "North West", "Free State", "Northern Cape" };
+                return View(client);
+            }
+
             return RedirectToAction(nameof(Index));
         }
 
+        // GET: Clients/Edit/5
         public async Task<IActionResult> Edit(int id)
         {
-            var client = await _context.Clients.FindAsync(id);
+            var client = await _apiService.GetClientAsync(id);
             if (client == null) return NotFound();
+
+            ViewBag.Regions = new[] { "Western Cape", "Gauteng", "KwaZulu-Natal", "Eastern Cape", "Limpopo", "Mpumalanga", "North West", "Free State", "Northern Cape" };
             return View(client);
         }
 
+        // POST: Clients/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, Client client)
         {
             if (id != client.Id) return NotFound();
+
             ModelState.Remove("Contracts");
-            if (!ModelState.IsValid) return View(client);
-            _context.Update(client);
-            await _context.SaveChangesAsync();
+
+            if (!ModelState.IsValid)
+            {
+                ViewBag.Regions = new[] { "Western Cape", "Gauteng", "KwaZulu-Natal", "Eastern Cape", "Limpopo", "Mpumalanga", "North West", "Free State", "Northern Cape" };
+                return View(client);
+            }
+
+            var success = await _apiService.UpdateClientAsync(id, client);
+
+            if (!success)
+            {
+                ModelState.AddModelError("", "Failed to update client. Please try again.");
+                ViewBag.Regions = new[] { "Western Cape", "Gauteng", "KwaZulu-Natal", "Eastern Cape", "Limpopo", "Mpumalanga", "North West", "Free State", "Northern Cape" };
+                return View(client);
+            }
+
             return RedirectToAction(nameof(Index));
         }
 
+        // GET: Clients/Delete/5
         public async Task<IActionResult> Delete(int id)
         {
-            var client = await _context.Clients.FindAsync(id);
+            var client = await _apiService.GetClientAsync(id);
             if (client == null) return NotFound();
             return View(client);
         }
 
+        // POST: Clients/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var client = await _context.Clients.FindAsync(id);
-            if (client != null)
-            {
-                _context.Clients.Remove(client);
-                await _context.SaveChangesAsync();
-            }
+            await _apiService.DeleteClientAsync(id);
             return RedirectToAction(nameof(Index));
         }
     }

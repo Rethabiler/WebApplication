@@ -6,6 +6,7 @@ using WebApplication.Data;
 using WebApplication.Services;
 using Microsoft.OpenApi.Models;
 
+
 var builder = Microsoft.AspNetCore.Builder.WebApplication.CreateBuilder(args);
 
 // Add services
@@ -18,6 +19,11 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Currency service
 builder.Services.AddHttpClient<ICurrencyService, CurrencyService>();
+
+builder.Services.AddHttpClient<IGlmsApiService, GlmsApiService>(client =>
+{
+    client.BaseAddress = new Uri("https://localhost:7238");
+});
 
 // JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"]!;
